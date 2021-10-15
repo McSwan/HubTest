@@ -228,7 +228,6 @@ jobs:
       - name:  Copy to AWS for hosting
         if: ${{matrix.targetPlatform == 'WebGL'}}
         run: |
-#        aws s3 cp s3://roames-world/Software/DevLatest/master/ ${{ env.UnityProjectFolder }}/Assets/Plugins/ --recursive
           aws s3 sync ./build s3://buckettown
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
