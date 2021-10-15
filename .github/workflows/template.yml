@@ -241,6 +241,8 @@ jobs:
          
   jobs:
     deploy:
+      needs: buildWebGL
+      name: Deploy aws
       runs-on: ubuntu-latest
       steps:
       - name: Checkout
