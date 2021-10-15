@@ -226,17 +226,25 @@ jobs:
           branch: gh-pages
           folder: build/WebGL
           
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'ap-southeast-2'
+
+      - name: Deploy static site to S3 bucket
+#         run: aws s3 sync ./public/ s3://BUCKET_NAME --delete
+         run:  aws s3 sync ./build/WebGL s3://buckettown
       
-      - name:  Copy to AWS for hosting
-        if: ${{matrix.targetPlatform == 'WebGL'}}
-        run: |
-          aws s3 sync ./build/WebGL s3://buckettown
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'ap-southeast-2'
-
-
+#      - name:  Copy to AWS for hosting
+#        if: ${{matrix.targetPlatform == 'WebGL'}}
+#        run: |
+#          aws s3 sync ./build/WebGL s3://buckettown
+#        env:
+#          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          AWS_DEFAULT_REGION: 'ap-southeast-2'
       
 #      - name: Set AWS credentials
 #        uses: aws-actions/configure-aws-credentials@v1
