@@ -239,8 +239,7 @@ jobs:
 #         run: aws s3 sync ./build/WebGL s3://buckettown      
          
          
-  jobs:
-    deploy:
+  jobsdeploy:
       needs: buildWebGL
       name: Deploy aws
       runs-on: ubuntu-latest
