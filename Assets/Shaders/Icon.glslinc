@@ -1,0 +1,126 @@
+﻿#ifdef VERTEX 
+
+	// #include "UnityCG.glslinc" 
+	uniform sampler2D _MainTex; 
+	uniform lowp float g_CameraAltitude; 
+	uniform int g_ScreenHeight;
+	uniform int g_VRActive;
+	uniform lowp float _CameraOrthoSize; 
+	uniform lowp vec4 _CameraUp; 
+	uniform lowp vec4 _CameraRight; 
+	
+	out lowp vec4 _Colour; 
+	attribute vec4 Tangent;
+
+    ///////////////////////////////////
+    // Remove when UnityCG.glslinc works
+    ///////////////////////////////////
+	uniform vec4 _ScreenParams;
+	///////////////////////////////////
+	
+	void main() 
+	{
+		gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex; 
+		gl_PointSize = Tangent.z; 
+		_Colour = gl_Color; 
+		
+		if (gl_Color.a == 0.0) 
+		{
+			return; 
+		} 
+		
+		bool clamped = true; 
+		bool worldSize = Tangent.w > 0.001;
+		float maxWorldScale = Tangent.w;
+		if (gl_PointSize < 0.0) 
+		{
+			gl_PointSize = -gl_PointSize; 
+			clamped = false; 
+		} 
+		
+		//Shift icon up so it doesn't clip the terrain	
+		vec4 pos = gl_Vertex; 
+		if (clamped && !worldSize) 
+		{ 
+			pos.y = pos.y + gl_PointSize / _ScreenParams.y * gl_Position.w * 0.25; 
+			gl_Position = gl_ModelViewProjectionMatrix * pos; 
+		} 
+		
+		vec2 offset = Tangent.xy; 
+		offset.y = 1.0 - offset.y; 
+		offset.x = offset.x * 2.0 - 1.0; 
+		offset.y = offset.y * 2.0 - 1.0;
+
+		float offsetScale; 
+		if (_CameraOrthoSize < 0.0) 
+		{
+			// If world-size icon
+			if (worldSize)
+			{
+				float screenHeight = float(g_ScreenHeight);
+				float scaledScreenHeight = screenHeight * screenHeight / _ScreenParams.y;
+				gl_PointSize = min(gl_PointSize / (scaledScreenHeight * gl_Position.w * 0.01), maxWorldScale);
+
+				// McSwan
+				//gl_PointSize = 10.0;
+			}
+			else if (g_VRActive == 1)
+			{
+				gl_PointSize *= 2.0;
+			}
+			else
+			{				
+				float viewScale = 0.0 + (g_CameraAltitude + 1.0) / abs(gl_Position.w) * 2.0; 
+		
+				if (viewScale > 1.0) 
+				{ 
+					viewScale = 1.0; 
+				}
+		
+				gl_PointSize *= viewScale;
+			}
+
+			offsetScale = gl_PointSize / _ScreenParams.y * gl_Position.w * 0.5; 
+		}
+		else 
+		{
+		    if (worldSize)
+            {
+                gl_PointSize = min(gl_PointSize, maxWorldScale);
+            }
+
+			offsetScale = _CameraOrthoSize / _ScreenParams.y * gl_PointSize; 
+		} 
+		
+		pos.xyz = pos.xyz + offsetScale * _CameraRight.xyz * offset.x;
+		pos.xyz = pos.xyz + offsetScale * _CameraUp.xyz * offset.y; 
+		
+		gl_Position = gl_ModelViewProjectionMatrix * pos; 
+	} 
+	
+	#endif 
+	
+	#ifdef FRAGMENT 
+	
+	uniform sampler2D _MainTex; 
+	in lowp vec4 _Colour;
+
+	void main() 
+	{ 
+		if (_Colour.a == 0.0) 
+		{
+			gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0); 
+			return;
+		} 
+		
+		gl_FragColor = texture2D(_MainTex, vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y)) * _Colour;
+
+		#ifdef FIRSTPASS 
+		if (gl_FragColor.a < 0.5) 
+		{
+			discard; 
+		} 		
+		#endif 
+	} 
+	
+	#endif
